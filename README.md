@@ -235,12 +235,13 @@ tar -czf /opt/data-backup-$(date +%Y%m%d).tar.gz /opt/data/
 
 ## 👤 Autor
 
-**HADGER** — Técnico em Desenvolvimento de Sistemas @ SENAC
+**Emanuel** — Técnico em Desenvolvimento de Sistemas @SENAC
 Belo Horizonte, MG
 
-- 🎓 Aprendendo por fazendo: self-hosted AI, DevOps, automação
-- 📫 Telegram: [@HADGER](https://t.me/HADGER)
-- 💼 Buscando: estágio em Ciência da Computação / DevOps
+- 🎓 Learn by doing: self-hosted AI, DevOps, automations
+- 📫 Telegram: [@emanuelxbt](https://t.me/emanuelxbt)
+- 💻 LinkedIn: linkedin.com/in/emanuelxbt  
+- 💼 Buscando: Oportunidades de estágio ou primeiro emprego
 
 ---
 

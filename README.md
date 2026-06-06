@@ -57,7 +57,6 @@ manutenção em ambiente Umbrel.
 ## 📦 Pré-requisitos
 
 - [ ] Umbrel Home ou Umbrel OS instalado e acessível
-- [ ] Conta no [Umbrel App Store](http://umbrel.local)
 - [ ] Conta em provedor de API (recomendado: [OpenRouter](https://openrouter.ai))
 - [ ] API Key do provedor escolhido
 - [ ] Bot criado no Telegram via [@BotFather](https://t.me/BotFather)

@@ -1,3 +1,8 @@
+# 📊 Diagrama de Arquitetura
+
+> Diagrama completo da arquitetura Hermes Agent no Umbrel OS.
+> Veja [`../docs/arquitetura.md`](../docs/arquitetura.md) para a explicação detalhada.
+
 ```mermaid
 flowchart TB
     subgraph Umbrel["Umbrel OS"]
@@ -15,55 +20,48 @@ flowchart TB
     end
     
     TELEGRAM["Telegram Bot API"]
-    OPENROUTER["OpenRouter API"]
+    WHATSAPP["WhatsApp (Baileys)"]
+    OPENROUTER["OpenRouter / Anthropic / OpenAI"]
     
-    USER["👤 HADGER"] --> TELEGRAM
+    USER_PHONE["📱 Celular"] --> TELEGRAM
+    USER_PHONE --> WHATSAPP
+    USER_LAPTOP["💻 Notebook/MacBook (SSH)"] --> GW
+    
     TELEGRAM --> GW
+    WHATSAPP --> GW
     GW --> OPENROUTER
     GW --> TELEGRAM
+    GW --> WHATSAPP
     
     DATA -->|"config.yaml"| GW
     DATA -->|"state.db"| GW
     DATA -->|"skills/"| GW
     DATA -->|"memories/"| GW
-    DATA -->|"sessions/"| GW
 ```
-
-## Legenda
-
-| Componente | Tecnologia | Função |
-|---|---|---|
-| `web` | Docker container | Dashboard, terminal web, proxy |
-| `gateway` | Docker container | Gateway de mensagens WebSocket |
-| `/opt/data` | Docker volume (persistente) | Armazenamento durável |
-| Telegram Bot API | HTTPS | Comunicação com o usuário |
-| OpenRouter API | HTTPS | Acesso a modelos de IA |
 
 ## Fluxo de uma mensagem
 
 ```
-1. Usuário envia mensagem no Telegram
-2. Telegram Bot API entrega ao gateway (webhook polling)
-3. Gateway processa e envia à API de IA (OpenRouter)
-4. API de IA retorna a resposta
-5. Gateway envia resposta de volta ao Telegram
-6. Usuário recebe a resposta
+1. Usuário envia mensagem no Telegram/WhatsApp
+2. Plataforma entrega ao gateway (polling no Telegram)
+3. Gateway carrega contexto da sessão (state.db)
+4. Gateway envia prompt ao modelo de IA (OpenRouter)
+5. Modelo responde com texto ou tool calls
+6. Gateway executa ferramentas e devolve ao modelo
+7. Resposta final é entregue ao usuário
+8. Conversa é persistida em state.db
 ```
 
 ## Persistência
 
-Tudo que sobrevive a reinícios e updates do app fica em `/opt/data`:
-
 ```
 /opt/data/
-├── config.yaml          ← Configuração principal
-├── .env                 ← API keys
-├── state.db             ← Banco SQLite do gateway
-├── SOUL.md              ← Personalidade do agente
+├── config.yaml          ← Config principal
+├── .env                 ← API keys (⚠️ nunca commitado)
+├── SOUL.md              ← Personalidade
+├── state.db             ← SQLite (sessões, mensagens)
 ├── skills/              ← Skills instaladas
-├── sessions/            ← Histórico de conversas
 ├── memories/            ← Memórias de longo prazo
-│   ├── MEMORY.md
-│   └── USER.md
+├── sessions/            ← Histórico (.jsonl)
 └── logs/                ← Logs do sistema
 ```

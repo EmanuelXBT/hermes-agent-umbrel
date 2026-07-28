@@ -1,82 +1,231 @@
-# Configuração Avançada — Hermes Agent
+# ⚙️ Configuração — Referência Completa
 
-## Arquivo config.yaml
+> Toda configuração do Hermes Agent no Umbrel. Atualizado para versão 0.19+.
 
-Toda a configuração fica em `/opt/data/config.yaml`.
+---
 
-### Estrutura completa
+## Arquivos de configuração
+
+| Arquivo | Propósito | Contém segredos? |
+|---|---|---|
+| `/opt/data/config.yaml` | Comportamento: modelos, plataformas, tools, agent | Não (referencia `.env`) |
+| `/opt/data/.env` | API keys, tokens, credenciais | **Sim** — nunca commitado |
+| `/opt/data/SOUL.md` | Personalidade: tom, regras, identidade | Não |
+
+---
+
+## `config.yaml` — Estrutura completa
 
 ```yaml
-# Provedor de API
-api:
-  provider: "openrouter"          # openrouter, openai, anthropic
-  key: "sk-or-sua-key"
-
-# Telegram
-telegram:
-  bot_token: "SEU_TOKEN"
-  allowed_chats:
-    - 1410863491                  # Seu user ID
-
-# Modelo de IA (opcional — usa padrão do provedor)
+# ── Modelo ──────────────────────────────────────────
 model:
-  provider: "openrouter"
-  name: "openrouter/owl-alpha"
+  default: "openrouter/owl-alpha"       # Modelo principal
+  provider: "openrouter"                 # Provedor padrão
+  # context_length: 131072               # Opcional: override do limite
 
-# Skills (opcional)
-skills:
-  - "hermes-agent"
-  - "umbrel"
+# ── Agente ──────────────────────────────────────────
+agent:
+  max_turns: 90                          # Máximo de iterações por resposta
+  tool_use_enforcement: true             # Força uso de ferramentas
+
+# ── Terminal ────────────────────────────────────────
+terminal:
+  timeout: 180                           # Timeout de comandos (segundos)
+  # backend: local                       # Padrão: executa no container
+
+# ── Gateway (mensageria) ────────────────────────────
+gateway:
+  platforms:
+    telegram:
+      enabled: true
+      bot_token: "${TELEGRAM_BOT_TOKEN}"   # Lê do .env
+      # allowed_chats: [123456789]          # Opcional: whitelist de user IDs
+
+    whatsapp:
+      enabled: false
+      # Configuração gerenciada pelo plugin
+
+# ── Aprovações ──────────────────────────────────────
+approvals:
+  mode: manual        # manual | smart | off
+  # mode: smart       # Auto-aprova baixo risco
+  # mode: off         # ⚠️ Sem confirmação
+
+# ── Segurança ───────────────────────────────────────
+security:
+  redact_secrets: true             # Remove secrets do contexto
+  # tirith_enabled: true           # Scanner de segurança (padrão: on)
+
+# ── Compressão de contexto ──────────────────────────
+compression:
+  enabled: true
+  threshold: 0.50                  # % de uso do contexto que dispara compressão
+  target_ratio: 0.20               # % do contexto a manter após compressão
+
+# ── Memória ─────────────────────────────────────────
+memory:
+  memory_enabled: true             # Memória persistente entre sessões
+  user_profile_enabled: true       # Perfil do usuário (nome, preferências)
+  provider: "builtin"              # builtin | honcho | mem0
+
+# ── Delegação (subagentes) ──────────────────────────
+delegation:
+  max_concurrent_children: 3       # Subagentes paralelos
+  max_spawn_depth: 1               # Profundidade de nesting
+  max_iterations: 50               # Iterações máximas por subagente
+
+# ── Cron ────────────────────────────────────────────
+cron:
+  enabled: true
+  # mirror_delivery: false         # Entrega de output em chat ativo
+
+# ── Curator (gestão de skills) ──────────────────────
+curator:
+  enabled: true
+  interval_hours: 24               # Frequência de verificação
+  min_idle_hours: 72               # Skills inativas por X horas → stale
+  stale_after_days: 30             # Stale por X dias → archive
 ```
 
-## Provedores de API
+---
 
-| Provedor | Custo | Modelos | Nota |
-|---|---|---|---|
-| OpenRouter | Pay-as-you-use | 100+ modelos | ✅ Recomendado |
-| OpenAI | Pay-as-you-use | GPT-4, GPT-4o | Caro |
-| Anthropic | Pay-as-you-use | Claude 3.5 | Bom |
-| Google AI | Free tier | Gemini | Limitado |
+## `.env` — Variáveis de ambiente
 
-## SOUL.md — Personalidade
+```env
+# Provedores de IA (configure pelo menos um)
+OPENROUTER_API_KEY=sk-or-v1-...
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GOOGLE_API_KEY=...
+DEEPSEEK_API_KEY=sk-...
 
-Crie `/opt/data/SOUL.md` para definir a personalidade:
+# Mensageria
+TELEGRAM_BOT_TOKEN=123456789:AAH...
+
+# GitHub (para integração com repositórios)
+GITHUB_TOKEN=ghp_...
+
+# Outros serviços (opcionais)
+NOTION_API_KEY=...
+SPOTIFY_CLIENT_ID=...
+SPOTIFY_CLIENT_SECRET=...
+```
+
+As variáveis podem ser referenciadas no `config.yaml` com `${VARIAVEL}`.
+
+---
+
+## `SOUL.md` — Personalidade
+
+O SOUL é injetado no system prompt de **toda** conversa. Define tom, regras, identidade.
 
 ```markdown
-# SOUL.md
+# SOUL — Assistente Pessoal
 
-Você é um assistente técnico direto e prático.
-Responde em português brasileiro.
-Sem enrolação, vai direto ao ponto.
+## Quem você é
+Assistente técnico de um desenvolvedor. Direto, prático, sem firulas.
+
+## Tom e estilo
+- Português brasileiro (primário)
+- Respostas curtas e objetivas
+- Prefere código funcional a explicações longas
+- Admite quando não sabe — sem alucinar
+
+## Regras
+- Não executa comandos destrutivos sem confirmação
+- Arquivos duráveis vão em /opt/data
+- Sempre propõe a solução mais simples primeiro
 ```
+
+### Variáveis disponíveis no SOUL
+
+O Hermes injeta automaticamente informações do ambiente no system prompt. Você **não** precisa incluir:
+
+- Sistema operacional e host
+- Paths padrão (`$HOME`, `/opt/data`)
+- Versão do Python
+- Plataformas conectadas
+
+Isso tudo é adicionado automaticamente pelo `prompt_builder`.
+
+---
 
 ## Skills
 
-Skills são módulos que expandem as capacidades do Hermes.
+Skills expandem as capacidades do agente. São documentos Markdown com instruções que o agente carrega quando relevantes.
 
-### Instalar skill
+### Gerenciamento
 
 ```bash
-# Via terminal do Hermes
-hermes skills install nome-da-skill
+# Listar skills instaladas
+hermes skills list
+
+# Buscar no catálogo
+hermes skills search "github"
+
+# Instalar
+hermes skills install github-workflow
+
+# Remover
+hermes skills uninstall github-workflow
+
+# Ver detalhes de uma skill
+hermes skills inspect github-workflow
 ```
 
-### Skills úteis
+### Skills recomendadas para Umbrel
 
-| Skill | Função |
-|---|---|
-| `umbrel` | Gerenciar apps do Umbrel |
-| `github` | Gerenciar repositórios |
-| `spotify` | Controlar Spotify |
-| `youtube` | Transcrever vídeos |
+| Skill | Categoria | Função |
+|---|---|---|
+| `umbrel` | DevOps | Gerenciar apps, containers, persistência no Umbrel |
+| `github-workflow` | Desenvolvimento | PRs, issues, code review, CI/CD |
+| `obsidian-vault-workflows` | Notas | Criar e gerenciar notas no Obsidian |
+| `dev-workflow` | Desenvolvimento | TDD, debugging, code review |
+| `hermes-desktop-umbrel` | Infra | Conectar Hermes Desktop ao Umbrel |
+| `media` | Mídia | YouTube, GIFs, playlists |
+| `research` | Pesquisa | arXiv, papers, RSS |
+| `productivity` | Produtividade | Google Workspace, Notion, Airtable |
 
-## Variáveis de ambiente
+### Skills auto-criadas
 
-Arquivo `/opt/data/.env`:
+O Hermes cria skills automaticamente quando aprende workflows novos. Elas ficam em `/opt/data/skills/` com `created_by: "agent"`. O **Curator** gerencia o ciclo de vida delas (ativa → idle → stale → archive).
 
-```env
-OPENROUTER_API_KEY=sk-or-sua-key
-TELEGRAM_BOT_TOKEN=seu-token
+---
+
+## Profiles (múltiplos usuários/contextos)
+
+Se mais de uma pessoa usa o mesmo Umbrel, ou você quer separar contextos (trabalho vs pessoal):
+
+```bash
+# Criar perfil
+hermes profile create trabalho
+
+# Listar perfis
+hermes profile list
+
+# Usar perfil específico
+hermes --profile trabalho
+
+# Cada perfil tem skills/, memories/, plugins/ isolados
 ```
 
-> ⚠️ Nunca commite `.env` no GitHub. Use `.gitignore`.
+---
+
+## Modelos de IA recomendados
+
+| Modelo | Provedor | Custo | Ideal para |
+|---|---|---|---|
+| `google/gemini-2.5-flash` | OpenRouter | **Grátis** | Tarefas diárias, teste |
+| `google/gemini-2.5-pro` | OpenRouter | Baixo | Tarefas complexas |
+| `anthropic/claude-sonnet-4` | OpenRouter | Médio | Código, raciocínio |
+| `deepseek/deepseek-chat` | DeepSeek | Muito baixo | Alternativa barata |
+| `openai/gpt-4o` | OpenAI | Alto | Qualidade máxima |
+
+Para tarefas que exigem raciocínio visual (análise de imagens), use modelos com suporte a visão como `google/gemini-2.5-flash` ou `openai/gpt-4o`.
+
+---
+
+## Próximo passo
+
+- [`dispositivos.md`](dispositivos.md) — Conectar celular, notebook e outros
+- [`manutencao.md`](manutencao.md) — Limpeza, backup, troubleshooting

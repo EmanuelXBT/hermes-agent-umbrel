@@ -49,14 +49,14 @@ Tudo converge no Umbrel. Ele é o cérebro que nunca dorme.
 
 ## 📋 Índice
 
-- [Pré-requisitos](#-pré-requisitos)
-- [Instalação](#-instalação)
-- [Conectando dispositivos](#-conectando-dispositivos)
-- [Configuração](#-configuração)
-- [Manutenção](#-manutenção)
-- [Troubleshooting](#-troubleshooting)
-- [Estrutura de arquivos](#-estrutura-de-arquivos)
-- [Leitura adicional](#-leitura-adicional)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação](#instalação)
+- [Conectando dispositivos](#conectando-dispositivos)
+- [Configuração](#configuração)
+- [Manutenção](#manutenção)
+- [Troubleshooting](#troubleshooting)
+- [Estrutura de arquivos](#estrutura-de-arquivos)
+- [Leitura adicional](#leitura-adicional)
 
 ---
 
@@ -64,7 +64,7 @@ Tudo converge no Umbrel. Ele é o cérebro que nunca dorme.
 
 | Requisito | Onde conseguir |
 |---|---|
-| Umbrel Home ou Umbrel OS | [umbrel.com](https://umbrel.com) |
+| Umbrel Home (https://umbrel.com) ou Mini PC (https://meli.la/2BvdaV4)) |
 | API key de provedor de IA | [OpenRouter](https://openrouter.ai/keys) (recomendado) ou [Anthropic](https://console.anthropic.com), [OpenAI](https://platform.openai.com) |
 | Bot do Telegram (opcional) | [@BotFather](https://t.me/BotFather) |
 | Node.js 18+ (só se for usar WhatsApp) | [nodejs.org](https://nodejs.org) |
